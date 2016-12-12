@@ -93,4 +93,57 @@ ggplot(df2, aes(x = weight, y = height, color = outlier_maha)) +
       scale_colour_manual(values=cbPalette) +
       geom_smooth(method = "lm", se = FALSE, color = "red")
 
+# Housing Dataset
+df <- read.csv("train.csv")
+
+# Select only 5 features - SalePrice is the response variable
+df <- df %>%
+      select(SalePrice, GrLivArea, GarageYrBlt, LotArea, LotFrontage)
+df <- df[complete.cases(df), ]
+head(df)
+
+# Calculate Mahalanobis with predictor variables
+df2 <- df[, -1]    # Remove SalePrice Variable
+m_dist <- mahalanobis(df2, colMeans(df2), cov(df2))
+df$MD <- round(m_dist, 1)
+
+# Scatterplot
+df$outlier <- "No"
+ggplot(df, aes(x = LotArea, y = SalePrice/1000, color = outlier)) +
+      geom_point(size = 5, alpha = 0.6) +
+      labs(title = "Sale Price vs Lot Area",
+           subtitle = "Scatterplot of Sale Price (kUSD) and Lot Area (SQFT)",
+           caption = "Source: Kaggle") +
+      ylab("Sale Price in kUSD") + xlab("Lot Area in SQFT") +
+      scale_y_continuous(breaks = seq(0, 800, 100)) +
+      scale_x_continuous(breaks = seq(0, 225000, 25000)) +
+      scale_colour_manual(values=cbPalette) +
+      geom_smooth(method = "lm", se = FALSE, color = "blue")
+
+# Update Outlier Feature - using Threshold of 20
+df$outlier[df$MD > 20] <- "Yes"
+
+# Scatterplot with outlier detection
+ggplot(df, aes(x = LotArea, y = SalePrice/1000, color = outlier)) +
+      geom_point(size = 5, alpha = 0.6) +
+      labs(title = "Sale Price vs Lot Area",
+           subtitle = "Scatterplot of Sale Price (kUSD) and Lot Area (SQFT) - Outlier Detection with Mahalanobis Distance",
+           caption = "Source: Kaggle") +
+      ylab("Sale Price in kUSD") + xlab("Lot Area in SQFT") +
+      scale_y_continuous(breaks = seq(0, 800, 100)) +
+      scale_x_continuous(breaks = seq(0, 225000, 25000)) +
+      scale_colour_manual(values=cbPalette)
+
+# Remove outliers and create new regression line
+df2 <- df[df$outlier == "No",]
+ggplot(df2, aes(x = LotArea, y = SalePrice/1000, color = outlier)) +
+      geom_point(size = 5, alpha = 0.6) +
+      labs(title = "Sale Price vs Lot Area - Outliers removed",
+           subtitle = "Scatterplot of Sale Price (kUSD) and Lot Area (SQFT)",
+           caption = "Source: Kaggle") +
+      ylab("Sale Price in kUSD") + xlab("Lot Area in SQFT") +
+      scale_y_continuous(breaks = seq(0, 800, 100)) +
+      scale_x_continuous(breaks = seq(0, 225000, 25000)) +
+      scale_colour_manual(values=cbPalette) +
+      geom_smooth(method = "lm", se = FALSE, color = "blue")
 
